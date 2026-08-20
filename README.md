@@ -42,10 +42,12 @@ That's it. Because the page is fully self-contained, dropping the folder into an
 - **Rename anyone** (click any person's name on their tile)
 - **Record** the session (the round Record button — only the host sees it)
 
-**In Settings (gear button):**
-- **Auto-feature the speaker** (everyone) — on by default. Turn it off to keep everyone in the equal gallery and never auto-switch.
-- **Tap a person to feature them** (host only) — turn this on, then tap anyone's video to make them the big view *for everyone*; tap again (or use **Release** in Settings) to go back. This overrides the automatic switching while it's set.
-- **Speaking sensitivity** — how easily your voice registers. Slide toward *More* if your timer keeps pausing while you talk, toward *Less* if background noise triggers it. It now defaults to a higher, more forgiving setting so timers stay steady through natural pauses.
+**In Settings (gear button) — host only.** These control the whole room, so everyone sees the same view and detection:
+- **Auto-feature the speaker** — on by default. Automatically makes whoever's talking the big view. Turn it off to keep everyone in the equal gallery. The switching is eased and rate-limited, so it feels calm rather than jumpy — a person has to actually hold the floor for a moment before taking the spotlight.
+- **Tap a person to feature them** — turn this on, then tap anyone's video to make them the big view *for everyone*; tap again (or use **Release** in Settings) to go back. This overrides the automatic switching while it's set.
+- **Speaking sensitivity** — one setting that applies to everyone's mic. Slide toward *More* if timers keep pausing mid-sentence, toward *Less* if background noise triggers them.
+
+Guests don't see these controls — they just get their own mic, camera, screen share, and rename. Only the host runs the layout and sensitivity.
 
 **The automatic layout:**
 - One person talking → they fill the main stage, everyone else in a gallery on the right

@@ -128,6 +128,10 @@
   .stage{flex:1;min-width:0;padding:16px;overflow:hidden}
   .layout-spotlight{display:flex;gap:14px;height:100%}
   .spotlight-main{flex:1;min-width:0}
+  .spotlight-main.enter{animation:mainIn .45s cubic-bezier(.22,.61,.36,1)}
+  @keyframes mainIn{from{opacity:.15;transform:scale(.975)}to{opacity:1;transform:scale(1)}}
+  .spotlight-gallery.enter .tile{animation:galIn .35s ease}
+  @keyframes galIn{from{opacity:.45}to{opacity:1}}
   .spotlight-gallery{width:260px;flex:0 0 auto;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
   .spotlight-gallery .tile{aspect-ratio:16/10;height:auto}
   .layout-grid{display:grid;gap:14px;height:100%;grid-template-columns:1fr}
@@ -197,6 +201,8 @@
   .switch .knob{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#e8ecf4;transition:left .16s}
   .switch.on{background:var(--accent);border-color:var(--accent)}
   .switch.on .knob{left:21px;background:#fff}
+  .host-chip{font-size:10px;font-weight:700;background:rgba(99,102,241,.9);color:#fff;padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:middle}
+  .applies{font-size:10.5px;color:var(--accent2)}
   .set-sec{border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
   .slabel2{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:2px 0 6px}
   .pin-status{background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.4);border-radius:10px;padding:9px 11px;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
@@ -386,7 +392,8 @@ const IC = {
 const MAX_PEOPLE = 4;
 const AVATAR_COLORS = ['#6366f1','#22c55e','#f59e0b','#ec4899','#22d3ee','#a855f7'];
 const DOMINANT_RATIO = 1.7;      // one voice must be this much louder to keep spotlight when several talk
-const MIN_SWITCH_MS  = 700;      // debounce for changing the spotlight target
+const MIN_SWITCH_MS  = 1300;     // minimum time between spotlight changes (calms rapid switching)
+const SWITCH_HOLD    = 700;      // a new speaker must hold the lead this long before taking the spotlight
 const SPEAK_HANGOVER = 850;      // keep "speaking" true this long after volume drops (rides over natural pauses)
 const REC_MAX_MS     = 60*60*1000; // auto-stop recording at 60 min
 const REC_MAX_BYTES  = 245*1024*1024; // safety cap ~245 MB
@@ -408,6 +415,9 @@ const state = {
   hostPinMode:false,             // host: tap a person to feature them for everyone
   pinnedId:null,                 // manually pinned participant (real id), applies to everyone
   currentMain:null,              // id currently spotlighted (or 'screen' or null)
+  pendingMain:null,              // candidate main awaiting the hold time
+  pendingSince:0,
+  _prevMain:null,                // last main we actually rendered (for the enter animation)
   lastSwitch:0,
   audioCtx:null,
   analyser:null,
@@ -543,7 +553,10 @@ function registerDataConn(id, conn, weInitiated){
   conn.on('open', ()=>{
     p.open = true;
     // introduce ourselves
-    sendTo(conn, {t:'hello', id:state.me.id, name:state.me.name, micOn:state.me.micOn, camOn:state.me.camOn, isCreator:state.me.isCreator, sharing:state.sharing, pinnedId:state.me.isCreator?state.pinnedId:undefined});
+    sendTo(conn, {t:'hello', id:state.me.id, name:state.me.name, micOn:state.me.micOn, camOn:state.me.camOn, isCreator:state.me.isCreator, sharing:state.sharing,
+      pinnedId:state.me.isCreator?state.pinnedId:undefined,
+      autoPin:state.me.isCreator?state.autoPin:undefined,
+      sensitivity:state.me.isCreator?state.sensitivity:undefined});
     // make sure media is set up (smaller-id side places the call)
     ensurePeer(id);
     // if we are the creator, enforce cap + hand out roster
@@ -578,7 +591,11 @@ function handleData(fromId, d){
     case 'hello':
       p.name=d.name||p.name; p.micOn=d.micOn??p.micOn; p.camOn=d.camOn??p.camOn; p.isCreator=!!d.isCreator;
       if(d.sharing){ p.screening=true; state.remoteSharer=fromId; }
-      if(d.pinnedId!==undefined && d.isCreator) state.pinnedId=d.pinnedId||null;
+      if(d.isCreator){
+        if(d.pinnedId!==undefined) state.pinnedId=d.pinnedId||null;
+        if(typeof d.autoPin==='boolean') state.autoPin=d.autoPin;
+        if(typeof d.sensitivity==='number') state.sensitivity=d.sensitivity;
+      }
       ensurePeer(fromId);
       renderTiles(); renderTimers(); updateCount();
       break;
@@ -608,6 +625,14 @@ function handleData(fromId, d){
       updateLayout(performance.now()); renderTiles();
       if(d.id) toast((p.name||'The host')+' featured '+(state.pinnedId===state.me.id?'you':(pinnedName())));
       break;
+    case 'settings':
+      // only honor from the room creator; applies to everyone
+      if(p.isCreator || d.force){
+        if(typeof d.autoPin==='boolean') state.autoPin=d.autoPin;
+        if(typeof d.sensitivity==='number') state.sensitivity=d.sensitivity;
+        updateLayout(performance.now());
+      }
+      break;
     case 'record':
       if(d.on) showRecPill(); else hideRecPill();
       break;
@@ -632,6 +657,8 @@ function removePeer(id){
 function sendTo(conn, obj){ try{ if(conn && conn.open) conn.send(obj); }catch(e){} }
 function broadcast(obj){ for(const p of state.peers.values()) sendTo(p.conn, obj); }
 function broadcastState(){ broadcast({t:'state', name:state.me.name, micOn:state.me.micOn, camOn:state.me.camOn}); }
+/* host pushes shared room settings (layout auto-switch + speaking sensitivity) to everyone */
+function broadcastSettings(){ if(!state.me.isCreator) return; broadcast({t:'settings', autoPin:state.autoPin, sensitivity:state.sensitivity}); }
 
 function attachStream(id, stream){
   const p=getPeer(id);
@@ -752,40 +779,50 @@ function toggleSettings(){
   if(setOpen){ closeSettings(); return; }
   setPop=document.createElement('div');
   setPop.className='settings-pop';
-  const hostRows = state.me.isCreator ? `
-    <div class="sw-row">
-      <div class="sw-txt"><div class="sw-title">Tap a person to feature them</div><div class="sw-sub">Host only. Tap anyone’s video to make them the big view for everyone. Tap again to release.</div></div>
-      <button class="switch ${state.hostPinMode?'on':''}" id="swPin" role="switch" aria-checked="${state.hostPinMode}"><span class="knob"></span></button>
-    </div>
-    <div id="pinStatus"></div>` : '';
+
+  if(!state.me.isCreator){
+    // guests: no controls — the host runs the room
+    setPop.innerHTML=`
+      <div class="set-head"><h4>Settings</h4><button class="set-close" id="setClose">✕</button></div>
+      <div class="note" style="margin-top:2px">The host controls the layout and speaking sensitivity for the whole room, so everyone sees the same view.<br><br>You can still control your own <b>mic</b>, <b>camera</b>, <b>screen share</b>, and your <b>name</b> from the bar below.</div>`;
+    $('#room').appendChild(setPop);
+    setOpen=true; document.addEventListener('keydown', escSettings);
+    $('#setClose').onclick=closeSettings;
+    return;
+  }
+
+  // host: full controls (these apply to everyone in the room)
   setPop.innerHTML=`
-    <div class="set-head"><h4>Settings</h4><button class="set-close" id="setClose">✕</button></div>
+    <div class="set-head"><h4>Room settings <span class="host-chip">Host</span></h4><button class="set-close" id="setClose">✕</button></div>
 
     <div class="sw-row">
-      <div class="sw-txt"><div class="sw-title">Auto-feature the speaker</div><div class="sw-sub">Automatically make whoever’s talking the big view. Turn off to keep everyone in the equal gallery.</div></div>
+      <div class="sw-txt"><div class="sw-title">Auto-feature the speaker</div><div class="sw-sub">Make whoever’s talking the big view, for everyone. Turn off to keep the equal gallery.</div></div>
       <button class="switch ${state.autoPin?'on':''}" id="swAuto" role="switch" aria-checked="${state.autoPin}"><span class="knob"></span></button>
     </div>
 
-    ${hostRows}
+    <div class="sw-row">
+      <div class="sw-txt"><div class="sw-title">Tap a person to feature them</div><div class="sw-sub">Turn on, then tap anyone’s video to make them the big view for everyone. Tap again to release.</div></div>
+      <button class="switch ${state.hostPinMode?'on':''}" id="swPin" role="switch" aria-checked="${state.hostPinMode}"><span class="knob"></span></button>
+    </div>
+    <div id="pinStatus"></div>
 
     <div class="set-sec">
-      <div class="slabel"><span>Speaking sensitivity</span></div>
+      <div class="slabel"><span>Speaking sensitivity</span><span class="applies">applies to everyone</span></div>
       <div class="slabel2"><span>Less</span><span>More</span></div>
       <input type="range" id="sens" min="0" max="100" value="${Math.round(state.sensitivity*100)}">
-      <div class="note">How easily your voice registers for the spotlight and your speaking timer. Slide toward <b>More</b> if your timer keeps pausing while you talk; toward <b>Less</b> if background noise sets it off.</div>
+      <div class="note">How easily voices register for the spotlight and the speaking timers. Slide toward <b>More</b> if timers keep pausing mid-sentence; toward <b>Less</b> if background noise sets them off.</div>
     </div>`;
   $('#room').appendChild(setPop);
-  setOpen=true;
-  document.addEventListener('keydown', escSettings);
+  setOpen=true; document.addEventListener('keydown', escSettings);
   $('#setClose').onclick=closeSettings;
-  $('#sens').addEventListener('input', e=>{ state.sensitivity=e.target.value/100; });
+
   const swAuto=$('#swAuto');
-  swAuto.onclick=()=>{ state.autoPin=!state.autoPin; swAuto.classList.toggle('on',state.autoPin); swAuto.setAttribute('aria-checked',state.autoPin); updateLayout(performance.now()); renderTiles(); toast(state.autoPin?'Auto-feature on':'Auto-feature off — equal gallery'); };
-  if(state.me.isCreator){
-    const swPin=$('#swPin');
-    swPin.onclick=()=>{ state.hostPinMode=!state.hostPinMode; swPin.classList.toggle('on',state.hostPinMode); swPin.setAttribute('aria-checked',state.hostPinMode); renderTiles(); toast(state.hostPinMode?'Tap a person to feature them':'Tap-to-feature off'); };
-    refreshSettingsPin();
-  }
+  swAuto.onclick=()=>{ state.autoPin=!state.autoPin; swAuto.classList.toggle('on',state.autoPin); swAuto.setAttribute('aria-checked',state.autoPin); broadcastSettings(); updateLayout(performance.now()); renderTiles(); toast(state.autoPin?'Auto-feature on':'Auto-feature off — equal gallery'); };
+  const swPin=$('#swPin');
+  swPin.onclick=()=>{ state.hostPinMode=!state.hostPinMode; swPin.classList.toggle('on',state.hostPinMode); swPin.setAttribute('aria-checked',state.hostPinMode); renderTiles(); toast(state.hostPinMode?'Tap a person to feature them':'Tap-to-feature off'); };
+  let sensT;
+  $('#sens').addEventListener('input', e=>{ state.sensitivity=e.target.value/100; clearTimeout(sensT); sensT=setTimeout(broadcastSettings,120); });
+  refreshSettingsPin();
 }
 function refreshSettingsPin(){
   const el=setPop&&setPop.querySelector('#pinStatus'); if(!el) return;
@@ -905,15 +942,16 @@ function computeDesiredMain(){
 }
 function updateLayout(now){
   const desired=computeDesiredMain();
-  if(desired!==state.currentMain){
-    // screen share, manual pin, and auto-pin-off apply immediately; speaker-driven switches are debounced
-    const immediate = state.sharing || state.remoteSharer || !!state.pinnedId || !state.autoPin;
-    if(immediate || now-state.lastSwitch>MIN_SWITCH_MS){
-      state.currentMain=desired; state.lastSwitch=now;
-      renderTiles();
-    }
-  }
+  if(desired===state.currentMain){ state.pendingMain=desired; return; }
+  // screen share, manual pin, and auto-off apply right away; speaker-driven switches are eased in
+  const immediate = state.sharing || state.remoteSharer || !!state.pinnedId || !state.autoPin;
+  if(immediate){ commitMain(desired, now); return; }
+  // stability gate: the new target must persist for SWITCH_HOLD, and we rate-limit switches
+  if(desired!==state.pendingMain){ state.pendingMain=desired; state.pendingSince=now; }
+  const held = now-(state.pendingSince||0);
+  if(held>=SWITCH_HOLD && now-state.lastSwitch>=MIN_SWITCH_MS){ commitMain(desired, now); }
 }
+function commitMain(id, now){ state.currentMain=id; state.pendingMain=id; state.lastSwitch=now; renderTiles(); }
 
 /* ============================================================
    TILE RENDERING
@@ -991,14 +1029,16 @@ function renderTiles(){
 
   const mainId = state.currentMain;
   const haveMain = mainId && parts.some(pp=>pp.id===mainId);
+  const mainChanged = mainId!==state._prevMain;   // animate only on a real switch
+  state._prevMain = haveMain ? mainId : null;
 
   // clear stage container structure (but keep tile elements alive by re-appending)
   stage.innerHTML='';
   if(haveMain){
     stage.className='stage';
     const wrap=document.createElement('div'); wrap.className='layout-spotlight';
-    const main=document.createElement('div'); main.className='spotlight-main';
-    const gal=document.createElement('div'); gal.className='spotlight-gallery';
+    const main=document.createElement('div'); main.className='spotlight-main'+(mainChanged?' enter':'');
+    const gal=document.createElement('div'); gal.className='spotlight-gallery'+(mainChanged?' enter':'');
     const mainObj = mainId==='__self__'? state._selfTile : state.peers.get(mainId).tile;
     main.appendChild(mainObj.tile);
     parts.forEach(pp=>{
