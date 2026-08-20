@@ -42,6 +42,11 @@ That's it. Because the page is fully self-contained, dropping the folder into an
 - **Rename anyone** (click any person's name on their tile)
 - **Record** the session (the round Record button — only the host sees it)
 
+**In Settings (gear button):**
+- **Auto-feature the speaker** (everyone) — on by default. Turn it off to keep everyone in the equal gallery and never auto-switch.
+- **Tap a person to feature them** (host only) — turn this on, then tap anyone's video to make them the big view *for everyone*; tap again (or use **Release** in Settings) to go back. This overrides the automatic switching while it's set.
+- **Speaking sensitivity** — how easily your voice registers. Slide toward *More* if your timer keeps pausing while you talk, toward *Less* if background noise triggers it. It now defaults to a higher, more forgiving setting so timers stay steady through natural pauses.
+
 **The automatic layout:**
 - One person talking → they fill the main stage, everyone else in a gallery on the right
 - One person clearly louder than the others → that person takes the main stage

@@ -164,12 +164,14 @@
 
   /* control bar */
   .controls{
-    height:74px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;
-    background:var(--bg2);border-top:1px solid var(--line);
+    flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--bg2);border-top:1px solid var(--line);padding:10px 8px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
   }
   .ctrl{
-    width:52px;height:52px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);
-    color:var(--text);display:flex;align-items:center;justify-content:center;transition:all .12s;position:relative;
+    width:60px;min-height:58px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);
+    color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    transition:all .12s;padding:7px 4px;
   }
   .ctrl:hover{border-color:#3a4356}
   .ctrl.on{background:var(--panel2)}
@@ -177,8 +179,36 @@
   .ctrl.active{background:rgba(99,102,241,.22);border-color:var(--accent);color:#c7ccff}
   .ctrl.rec.active{background:rgba(239,68,68,.2);border-color:var(--rec);color:#fecaca}
   .ctrl.leave{background:var(--rec);border-color:var(--rec);color:#fff}
-  .ctrl svg{width:22px;height:22px}
-  .ctrl .cap{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);white-space:nowrap}
+  .ctrl svg{width:22px;height:22px;flex:0 0 auto}
+  .ctrl .cap{font-size:10.5px;line-height:1;color:var(--muted);white-space:nowrap}
+  .ctrl.off .cap,.ctrl.active .cap,.ctrl.rec.active .cap{color:inherit}
+  .ctrl.leave .cap{color:rgba(255,255,255,.9)}
+
+  /* switches + settings rows */
+  .set-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .set-close{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px;border-radius:8px}
+  .set-close:hover{background:var(--panel2);color:var(--text)}
+  .sw-row{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+  .sw-row:first-of-type{border-top:none}
+  .sw-txt{flex:1;min-width:0}
+  .sw-title{font-size:13.5px;font-weight:600;margin-bottom:3px}
+  .sw-sub{font-size:11.5px;color:var(--muted);line-height:1.45}
+  .switch{flex:0 0 auto;width:46px;height:27px;border-radius:20px;background:#2b3242;border:1px solid var(--line);position:relative;transition:background .15s;cursor:pointer;margin-top:2px}
+  .switch .knob{position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#e8ecf4;transition:left .16s}
+  .switch.on{background:var(--accent);border-color:var(--accent)}
+  .switch.on .knob{left:21px;background:#fff}
+  .set-sec{border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
+  .slabel2{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:2px 0 6px}
+  .pin-status{background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.4);border-radius:10px;padding:9px 11px;font-size:12.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
+  .mini-btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
+  .mini-btn:hover{border-color:var(--accent)}
+
+  /* pin affordances on tiles */
+  .tile.pinnable{cursor:pointer}
+  .tile.pinnable:hover{box-shadow:0 0 0 2px rgba(99,102,241,.5)}
+  .tile.pinned{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.6)}
+  .pin-badge{position:absolute;top:10px;right:10px;background:rgba(99,102,241,.92);color:#fff;font-size:10.5px;font-weight:700;padding:4px 8px;border-radius:8px;display:none;align-items:center;gap:4px;z-index:3}
+  .tile.pinned .pin-badge{display:flex}
 
   .settings-pop{
     position:absolute;bottom:82px;right:16px;width:280px;background:var(--panel);border:1px solid var(--line);
@@ -198,9 +228,60 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
   @media (max-width:760px){
-    .timers{display:none}
-    .spotlight-gallery{width:150px}
-    .roomcode .lbl{display:none}
+    /* top bar compacts */
+    .topbar{height:52px;padding:0 10px;gap:10px}
+    .topbar .brand-mini .name{display:none}
+    .topbar .logo-badge{width:30px;height:30px}
+    .roomcode{padding:5px 8px}
+    .roomcode .lbl{font-size:9px}
+    .roomcode .val{font-size:13px}
+    .countPill,#countPill{font-size:11px;padding:5px 9px}
+
+    /* stack: speaking-time strip on top, stage below */
+    .body{flex-direction:column}
+    .timers{
+      width:auto;height:auto;flex:0 0 auto;border-right:none;border-bottom:1px solid var(--line);
+      padding:8px 10px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;
+    }
+    .timers h3{display:none}
+    #timerList{display:flex;gap:8px}
+    .timers .trow{flex:0 0 auto;margin:0;padding:6px 10px;background:var(--panel);border:1px solid var(--line)}
+    .timers .tname{max-width:92px;font-size:12px}
+    .timers .ttime{font-size:11px}
+
+    .stage{padding:10px}
+
+    /* spotlight: big view on top, a horizontal filmstrip beneath */
+    .layout-spotlight{flex-direction:column;gap:10px}
+    .spotlight-main{flex:1;min-height:0}
+    .spotlight-gallery{
+      width:auto;flex:0 0 auto;flex-direction:row;height:92px;gap:8px;
+      overflow-x:auto;overflow-y:hidden;
+    }
+    .spotlight-gallery .tile{flex:0 0 auto;width:132px;height:92px;aspect-ratio:auto}
+    .spotlight-gallery .avatar .circle{width:40px;height:40px;font-size:16px}
+    .nameplate{left:6px;bottom:6px;padding:4px 7px}
+    .nameplate .pname{font-size:11.5px}
+    .tag{font-size:9.5px;padding:3px 6px;top:6px;left:6px}
+    .pin-badge{font-size:9px;padding:3px 6px;top:6px;right:6px}
+
+    /* gallery grid stays 2-up */
+    .layout-grid{gap:10px}
+    .layout-grid.g3 .tile:first-child{grid-column:auto}
+    .layout-grid.g3,.layout-grid.g4{grid-template-columns:1fr 1fr}
+
+    /* controls fit 6 across, labels still visible */
+    .controls{gap:6px;padding:8px 4px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+    .ctrl{width:52px;min-height:52px;padding:6px 2px;gap:2px}
+    .ctrl svg{width:20px;height:20px}
+    .ctrl .cap{font-size:9.5px}
+
+    /* settings as a bottom sheet */
+    .settings-pop{position:fixed;left:8px;right:8px;bottom:8px;width:auto;max-height:72vh;overflow-y:auto}
+  }
+  @media (max-width:360px){
+    .ctrl{width:46px}
+    .ctrl .cap{font-size:9px}
   }
 </style>
 </head>
@@ -306,7 +387,7 @@ const MAX_PEOPLE = 4;
 const AVATAR_COLORS = ['#6366f1','#22c55e','#f59e0b','#ec4899','#22d3ee','#a855f7'];
 const DOMINANT_RATIO = 1.7;      // one voice must be this much louder to keep spotlight when several talk
 const MIN_SWITCH_MS  = 700;      // debounce for changing the spotlight target
-const SPEAK_HANGOVER = 260;      // keep "speaking" true this long after volume drops (natural pauses)
+const SPEAK_HANGOVER = 850;      // keep "speaking" true this long after volume drops (rides over natural pauses)
 const REC_MAX_MS     = 60*60*1000; // auto-stop recording at 60 min
 const REC_MAX_BYTES  = 245*1024*1024; // safety cap ~245 MB
 const REC_VIDEO_BPS  = 450000;   // ~450 kbps video
@@ -322,7 +403,10 @@ const state = {
   cameraTrack:null,
   screenStream:null,
   sharing:false,
-  sensitivity:0.5,               // 0..1
+  sensitivity:0.7,               // 0..1  (higher = detects quieter speech)
+  autoPin:true,                  // auto-switch the spotlight to whoever's talking
+  hostPinMode:false,             // host: tap a person to feature them for everyone
+  pinnedId:null,                 // manually pinned participant (real id), applies to everyone
   currentMain:null,              // id currently spotlighted (or 'screen' or null)
   lastSwitch:0,
   audioCtx:null,
@@ -336,7 +420,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function initials(name){ if(!name) return '?'; const p=name.trim().split(/\s+/); return ((p[0]?.[0]||'')+(p[1]?.[0]||'')).toUpperCase()||name[0].toUpperCase(); }
 function colorFor(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))>>>0; return AVATAR_COLORS[h%AVATAR_COLORS.length]; }
 function fmtTime(ms){ const s=Math.floor(ms/1000); const m=Math.floor(s/60); return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
-function threshold(){ return 0.11 - state.sensitivity*0.085; } // higher sensitivity -> lower threshold (~0.025..0.11)
+function threshold(){ return 0.085 - state.sensitivity*0.070; } // higher sensitivity -> lower threshold (~0.015..0.085)
 let toastT;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
 
@@ -459,7 +543,7 @@ function registerDataConn(id, conn, weInitiated){
   conn.on('open', ()=>{
     p.open = true;
     // introduce ourselves
-    sendTo(conn, {t:'hello', id:state.me.id, name:state.me.name, micOn:state.me.micOn, camOn:state.me.camOn, isCreator:state.me.isCreator, sharing:state.sharing});
+    sendTo(conn, {t:'hello', id:state.me.id, name:state.me.name, micOn:state.me.micOn, camOn:state.me.camOn, isCreator:state.me.isCreator, sharing:state.sharing, pinnedId:state.me.isCreator?state.pinnedId:undefined});
     // make sure media is set up (smaller-id side places the call)
     ensurePeer(id);
     // if we are the creator, enforce cap + hand out roster
@@ -494,6 +578,7 @@ function handleData(fromId, d){
     case 'hello':
       p.name=d.name||p.name; p.micOn=d.micOn??p.micOn; p.camOn=d.camOn??p.camOn; p.isCreator=!!d.isCreator;
       if(d.sharing){ p.screening=true; state.remoteSharer=fromId; }
+      if(d.pinnedId!==undefined && d.isCreator) state.pinnedId=d.pinnedId||null;
       ensurePeer(fromId);
       renderTiles(); renderTimers(); updateCount();
       break;
@@ -517,6 +602,11 @@ function handleData(fromId, d){
     case 'screenshare':
       p.screening=d.on; if(d.on){ state.remoteSharer=fromId; } else if(state.remoteSharer===fromId){ state.remoteSharer=null; }
       renderTiles();
+      break;
+    case 'pin':
+      state.pinnedId = d.id || null;
+      updateLayout(performance.now()); renderTiles();
+      if(d.id) toast((p.name||'The host')+' featured '+(state.pinnedId===state.me.id?'you':(pinnedName())));
       break;
     case 'record':
       if(d.on) showRecPill(); else hideRecPill();
@@ -656,18 +746,53 @@ function replaceOutgoingVideo(track){
 
 /* ---------- settings ---------- */
 let setOpen=false, setPop=null;
+function closeSettings(){ setPop?.remove(); setPop=null; setOpen=false; document.removeEventListener('keydown', escSettings); }
+function escSettings(e){ if(e.key==='Escape') closeSettings(); }
 function toggleSettings(){
-  if(setOpen){ setPop?.remove(); setOpen=false; return; }
+  if(setOpen){ closeSettings(); return; }
   setPop=document.createElement('div');
   setPop.className='settings-pop';
+  const hostRows = state.me.isCreator ? `
+    <div class="sw-row">
+      <div class="sw-txt"><div class="sw-title">Tap a person to feature them</div><div class="sw-sub">Host only. Tap anyone’s video to make them the big view for everyone. Tap again to release.</div></div>
+      <button class="switch ${state.hostPinMode?'on':''}" id="swPin" role="switch" aria-checked="${state.hostPinMode}"><span class="knob"></span></button>
+    </div>
+    <div id="pinStatus"></div>` : '';
   setPop.innerHTML=`
-    <h4>Speaking sensitivity</h4>
-    <div class="slabel"><span>Less sensitive</span><span>More</span></div>
-    <input type="range" id="sens" min="0" max="100" value="${state.sensitivity*100}">
-    <div class="note">Controls how loud someone must be before they take the spotlight and their speaking timer runs. Nudge up if quiet talkers aren’t detected; down if background noise triggers it.</div>`;
+    <div class="set-head"><h4>Settings</h4><button class="set-close" id="setClose">✕</button></div>
+
+    <div class="sw-row">
+      <div class="sw-txt"><div class="sw-title">Auto-feature the speaker</div><div class="sw-sub">Automatically make whoever’s talking the big view. Turn off to keep everyone in the equal gallery.</div></div>
+      <button class="switch ${state.autoPin?'on':''}" id="swAuto" role="switch" aria-checked="${state.autoPin}"><span class="knob"></span></button>
+    </div>
+
+    ${hostRows}
+
+    <div class="set-sec">
+      <div class="slabel"><span>Speaking sensitivity</span></div>
+      <div class="slabel2"><span>Less</span><span>More</span></div>
+      <input type="range" id="sens" min="0" max="100" value="${Math.round(state.sensitivity*100)}">
+      <div class="note">How easily your voice registers for the spotlight and your speaking timer. Slide toward <b>More</b> if your timer keeps pausing while you talk; toward <b>Less</b> if background noise sets it off.</div>
+    </div>`;
   $('#room').appendChild(setPop);
   setOpen=true;
+  document.addEventListener('keydown', escSettings);
+  $('#setClose').onclick=closeSettings;
   $('#sens').addEventListener('input', e=>{ state.sensitivity=e.target.value/100; });
+  const swAuto=$('#swAuto');
+  swAuto.onclick=()=>{ state.autoPin=!state.autoPin; swAuto.classList.toggle('on',state.autoPin); swAuto.setAttribute('aria-checked',state.autoPin); updateLayout(performance.now()); renderTiles(); toast(state.autoPin?'Auto-feature on':'Auto-feature off — equal gallery'); };
+  if(state.me.isCreator){
+    const swPin=$('#swPin');
+    swPin.onclick=()=>{ state.hostPinMode=!state.hostPinMode; swPin.classList.toggle('on',state.hostPinMode); swPin.setAttribute('aria-checked',state.hostPinMode); renderTiles(); toast(state.hostPinMode?'Tap a person to feature them':'Tap-to-feature off'); };
+    refreshSettingsPin();
+  }
+}
+function refreshSettingsPin(){
+  const el=setPop&&setPop.querySelector('#pinStatus'); if(!el) return;
+  if(state.pinnedId){
+    el.innerHTML=`<div class="pin-status">Featuring <b>${escapeHtml(pinnedName())}</b> <button class="mini-btn" id="clearPin">Release</button></div>`;
+    el.querySelector('#clearPin').onclick=()=>setPin(null);
+  } else el.innerHTML='';
 }
 
 /* ============================================================
@@ -733,10 +858,38 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 
+/* ---- manual pin (host only) ---- */
+function pinnedName(){
+  if(!state.pinnedId) return '';
+  if(state.pinnedId===state.me.id) return state.me.name||'you';
+  const p=state.peers.get(state.pinnedId); return p? (p.name||'Guest') : 'someone';
+}
+function setPin(realId){            // realId===null clears; toggles if same
+  const next = (state.pinnedId===realId) ? null : realId;
+  state.pinnedId = next;
+  broadcast({t:'pin', id:next});
+  updateLayout(performance.now()); renderTiles();
+  if(setPop) refreshSettingsPin();
+  toast(next ? 'Featured '+pinnedName()+' for everyone' : 'Un-pinned — layout is automatic again');
+}
+/* called when host taps a tile while tap-to-pin is on */
+function handleTilePin(localId){
+  if(!state.me.isCreator || !state.hostPinMode) return;
+  const realId = localId==='__self__' ? state.me.id : localId;
+  setPin(realId);
+}
+
+/* map a real peer id to the local tile id */
+function resolveMain(realId){ return realId===state.me.id ? '__self__' : realId; }
+function mainExists(id){ if(id==='__self__') return true; const p=state.peers.get(id); return !!(p && (p.open||p.stream)); }
+
 /* decide who is spotlighted */
 function computeDesiredMain(){
   if(state.sharing) return '__self__';        // I'm sharing -> my screen is main
   if(state.remoteSharer) return state.remoteSharer;
+  // manual pin (set by host) beats everything below
+  if(state.pinnedId){ const m=resolveMain(state.pinnedId); if(mainExists(m)) return m; }
+  if(!state.autoPin) return null;              // auto-switching off -> gallery unless pinned/sharing
   // gather speakers
   const parts=[{id:'__self__', v:state.me.volume, sp:state.me.speaking}];
   for(const p of state.peers.values()) if(p.open) parts.push({id:p.id, v:p.volume, sp:p.speaking});
@@ -753,8 +906,8 @@ function computeDesiredMain(){
 function updateLayout(now){
   const desired=computeDesiredMain();
   if(desired!==state.currentMain){
-    // debounce switches (but screen share changes apply immediately)
-    const immediate = state.sharing || state.remoteSharer || desired==='__self__' && state.sharing;
+    // screen share, manual pin, and auto-pin-off apply immediately; speaker-driven switches are debounced
+    const immediate = state.sharing || state.remoteSharer || !!state.pinnedId || !state.autoPin;
     if(immediate || now-state.lastSwitch>MIN_SWITCH_MS){
       state.currentMain=desired; state.lastSwitch=now;
       renderTiles();
@@ -782,17 +935,21 @@ function ensureTile(id, self){
   const avatar=document.createElement('div'); avatar.className='avatar';
   avatar.innerHTML='<div class="circle"></div>';
   const tag=document.createElement('div');
+  const pinBadge=document.createElement('div'); pinBadge.className='pin-badge'; pinBadge.textContent='★ Featured';
   const plate=document.createElement('div'); plate.className='nameplate';
   plate.innerHTML='<span class="micoff hidden">'+IC.micoff+'</span><span class="pname"></span><span class="edit">'+IC.edit+'</span>';
-  tile.appendChild(video); tile.appendChild(avatar); tile.appendChild(tag); tile.appendChild(plate);
+  tile.appendChild(video); tile.appendChild(avatar); tile.appendChild(tag); tile.appendChild(pinBadge); tile.appendChild(plate);
   const obj={tile, video, avatar, tag, plate};
   if(self){ state._selfTile=obj; video.srcObject=state.localStream; video.play().catch(()=>{}); }
   else { const p=getPeer(id); p.tile=obj; p.videoEl=video; if(p.stream){ video.srcObject=p.stream; video.play().catch(()=>{}); } }
-  // rename interaction
-  plate.addEventListener('click', ()=>{
+  // rename interaction (click the name plate)
+  plate.addEventListener('click', (e)=>{
+    e.stopPropagation();
     if(self) openRename('__self__');
     else if(state.me.isCreator) openRename(id);
   });
+  // host tap-to-pin (click anywhere on the tile)
+  tile.addEventListener('click', ()=>{ handleTilePin(self?'__self__':id); });
   return obj;
 }
 
@@ -800,8 +957,11 @@ function fillTile(obj, id, self){
   const data = self ? {name:state.me.name||'You', micOn:state.me.micOn, camOn:state.me.camOn, speaking:state.me.speaking}
                     : (()=>{ const p=getPeer(id); return {name:p.name||'Guest', micOn:p.micOn, camOn:p.camOn, speaking:p.speaking}; })();
   const isScreen = (self && state.sharing) || (!self && id===state.remoteSharer);
+  const realId = self ? state.me.id : id;
   obj.tile.classList.toggle('screen', isScreen);
   obj.tile.classList.toggle('speaking', data.speaking && !isScreen);
+  obj.tile.classList.toggle('pinnable', state.me.isCreator && state.hostPinMode);
+  obj.tile.classList.toggle('pinned', state.pinnedId===realId);
   // video vs avatar
   const showVideo = isScreen || data.camOn;
   obj.video.style.display = showVideo ? 'block' : 'none';
