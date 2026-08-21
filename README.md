@@ -1,6 +1,6 @@
 # DocuPeer Podcast
 
-A private, browser-based podcast room for up to **4 people**. No installs, no accounts, no server to run. You host a room, share a code, and everyone joins with camera and mic. The layout switches automatically to whoever is speaking, and the host can record the whole thing as a single video for the DocuPeer website.
+A private, browser-based podcast room. No installs, no sign-ups, no server to run. You start a room, share the **link**, and everyone joins with camera and mic. The layout follows whoever's speaking, and the host can record the whole thing as one video for the DocuPeer website.
 
 ## What's in this folder
 
@@ -15,66 +15,70 @@ Keep all four files together in the same folder.
 
 ## Put it online (GitHub Pages)
 
-1. Create a new repository on GitHub (it can be private or public).
+1. Create a new repository on GitHub (public or private).
 2. Upload the **contents** of this folder — `index.html`, `peerjs.min.js`, and `DocuPeer.png` — to the repository root.
-3. In the repo, go to **Settings → Pages**.
+3. In the repo: **Settings → Pages**.
 4. Under **Build and deployment → Source**, choose **Deploy from a branch**, pick your `main` branch and the `/ (root)` folder, then **Save**.
-5. Wait about a minute. GitHub gives you a URL like `https://yourname.github.io/your-repo/`.
-6. Open that URL — you'll see the DocuPeer Podcast lobby. Share the link with your co-hosts.
+5. Wait about a minute for the URL, e.g. `https://yourname.github.io/your-repo/`.
 
-That's it. Because the page is fully self-contained, dropping the folder into any static host (GitHub Pages, Netlify, etc.) just works.
+Because the page is fully self-contained, dropping the folder into any static host just works. **HTTPS is required** for camera/mic — GitHub Pages is always HTTPS, so you're covered. (Opening the file directly from disk as `file://` won't allow the camera; use the Pages URL.)
 
-> **HTTPS is required** for camera/microphone access. GitHub Pages is always HTTPS, so you're covered. (Opening `index.html` directly from your hard drive as a `file://` link will *not* let the camera work — use the Pages URL.)
+## Persistent room links (like a meeting link)
+
+When you start a room, the address bar becomes something like `…/your-repo/#m=dp4kx9m2`. **That link is the room.** Share it with your co-hosts however you like. Anyone who opens it lands in that room, and if anyone **refreshes the page or closes and reopens the link, they drop straight back into the same room** — nothing is lost. Your name is remembered, so re-joining is one tap.
+
+You can also share just the short **room code** (shown top-left, e.g. `DP-4KX9-M2`); a guest can paste either the code or the full link on the start screen.
+
+> The person who *starts* the room is its host and keeps the room's link alive. As long as the host has the tab open, people can come and go freely. If the host closes the tab, the host can reopen the same link to bring the room back (give it a few seconds after a refresh while the link frees up).
 
 ## How to use it
 
-**Host a session.** Enter your name and click *Host a new session*. You'll get a session code like `DP-4KX9-M2`. Click **Copy** and send it to your guests.
+**Start a room.** Enter your name, click *Start a new room*. Share the link (top-left **Copy link**) or the room code with your guests.
 
-**Join a session.** Enter your name, type the code your host sent, and click *Join*.
+**Join a room.** Open the link someone shared and click *Join room*, or enter your name, paste the code/link on the start screen, and click *Join*.
 
 **Everyone can:**
 - Turn their **mic** on/off
 - Turn their **camera** on/off
-- **Rename** themselves (click your own name on your tile)
-- **Share their screen** (screen share automatically takes the main stage; everyone else moves to the gallery on the right until sharing stops)
+- **Rename** themselves (tap your own name on your tile)
+- **Share their screen** (a screen share automatically takes the main stage; everyone else moves to the gallery until sharing stops)
 
 **The host can additionally:**
-- **Rename anyone** (click any person's name on their tile)
-- **Record** the session (the round Record button — only the host sees it)
+- **Mute anyone** or **turn anyone's camera off** — the small buttons on the top-right of each person's video. (They can turn their own mic/camera back on themselves — like most meeting apps, the host can switch off but not force-on.)
+- **Rename anyone** (tap any person's name)
+- **Record** the session (the Record button — only the host has it)
+- Control the room's **layout and speaking sensitivity** in Settings (below)
 
-**In Settings (gear button) — host only.** These control the whole room, so everyone sees the same view and detection:
-- **Auto-feature the speaker** — on by default. Automatically makes whoever's talking the big view. Turn it off to keep everyone in the equal gallery. The switching is eased and rate-limited, so it feels calm rather than jumpy — a person has to actually hold the floor for a moment before taking the spotlight.
-- **Tap a person to feature them** — turn this on, then tap anyone's video to make them the big view *for everyone*; tap again (or use **Release** in Settings) to go back. This overrides the automatic switching while it's set.
-- **Speaking sensitivity** — one setting that applies to everyone's mic. Slide toward *More* if timers keep pausing mid-sentence, toward *Less* if background noise triggers them.
+**How many people?** There's no fixed limit — invite as many as you need. It's a direct peer-to-peer mesh, so it's happiest with a small podcast-sized group (roughly up to 6–8 on good connections); larger groups put more load on each person's browser.
 
-Guests don't see these controls — they just get their own mic, camera, screen share, and rename. Only the host runs the layout and sensitivity.
+**In Settings (gear button) — host only.** These apply to the whole room so everyone sees the same thing:
+- **Auto-feature the speaker** — on by default. Makes whoever's talking the big view. The switch is eased and rate-limited, so it stays calm instead of jumpy — a person has to hold the floor for a moment before taking the spotlight. Turn it off to keep everyone in an equal gallery.
+- **Tap a person to feature them** — turn on, then tap anyone's video to make them the big view *for everyone*; tap again (or **Release** in Settings) to go back.
+- **Speaking sensitivity** — one setting for everyone's mics. Slide toward *More* if the speaking timers pause mid-sentence, toward *Less* if background noise sets them off.
 
-**The automatic layout:**
-- One person talking → they fill the main stage, everyone else in a gallery on the right
-- One person clearly louder than the others → that person takes the main stage
-- Several people talking at once with nobody dominating → everyone shares an equal gallery
-- Nobody talking → everyone in the equal gallery
+Guests don't see these controls — only the host runs the layout and sensitivity.
 
-**Speaking timers** on the left track how long each person has actually spoken. If two people talk at the same time, both of their timers count up.
+**Speaking timers** on the left (a strip across the top on phones) show how long each person has actually spoken. The **host's device is the single source of truth** — it tallies everyone's time and everyone else's screen mirrors the host's numbers exactly, so there's no drift or disagreement between people. If two people talk at once, both count up. (The host's tallies survive a host refresh.)
 
 ## Recording
 
-Only the host records, and the recording happens **in the host's browser**. It captures the composed view — the automatic layout switching, the timers, everyone's video and mixed audio — exactly as it looked.
+Only the host records, and it happens **in the host's browser**. It captures the composed view — the layout switching, the timers, everyone's video and mixed audio — exactly as it looked.
 
-- Press **Record** to start, press it again (**Stop**) to finish.
-- When you stop, the video **downloads automatically** to the host's computer.
-- The file is named like `docupeer-podcast-20260820-1430.mp4`.
-- Recording auto-stops at **60 minutes** or if it reaches the size cap, whichever comes first.
-- At about **450 kbps video + 96 kbps audio**, a full hour comes out around **240 MB** — under your 250 MB target.
+- Press **Record** to start, press again (**Stop**) to finish.
+- On stop, the video **downloads automatically** to the host's computer, named like `docupeer-podcast-20260820-1430.mp4`.
+- Auto-stops at **60 minutes** or a size cap, whichever comes first.
+- At ~450 kbps video + 96 kbps audio, a full hour is around **240 MB** — under 250 MB.
 
-That downloaded file is the one you upload to the DocuPeer website.
+That downloaded file is what you upload to the DocuPeer website.
 
-> **File format:** Chrome, Edge, and Safari (recent versions) save a real **`.mp4`**. If a browser can't record MP4, DocuPeer falls back to `.webm` (it still plays everywhere and can be converted to MP4 if a specific tool requires it). For a guaranteed MP4, have the host use an up-to-date Chrome or Edge.
+> **Format:** recent Chrome, Edge, and Safari save a real **`.mp4`**. If a browser can't record MP4, it falls back to `.webm` (plays everywhere, convertible to MP4). For a guaranteed MP4, have the host use an up-to-date Chrome or Edge.
 
-## Good to know / limits
+## Works on phones
 
-- **Best in Chrome, Edge, or Safari** on a computer with a decent connection.
-- Built for **4 people** — it's a full peer-to-peer mesh, which is ideal for a small podcast.
-- It uses free public **STUN** servers to help browsers connect. On most home and office networks that's all that's needed. On unusually strict corporate or locked-down networks, one person occasionally can't connect peer-to-peer — switching networks (or a phone hotspot) fixes it. Adding a paid TURN server would remove that edge case if you ever need it.
-- Everyone sees the **same automatic layout** — that's the point, so the recording looks like a produced podcast.
-- Nothing is uploaded anywhere. Audio and video go directly between participants, and the recording lives only on the host's computer until they choose to share it.
+The whole thing is built to work on a phone — one of your hosts can join from mobile. On a narrow screen the speaking times become a strip along the top, the speaker fills the screen with a swipeable filmstrip of everyone else beneath, and all controls stay labeled and reachable.
+
+## Good to know
+
+- **Best in Chrome, Edge, or Safari** with a decent connection.
+- It uses free public **STUN** servers so browsers can find each other. That's enough on most home and mobile networks. On unusually locked-down corporate networks one person can occasionally fail to connect peer-to-peer — switching networks (or a phone hotspot) fixes it; a paid TURN server would remove that edge case entirely if you ever need it.
+- Nothing is uploaded anywhere. Audio and video go directly between participants, and the recording stays on the host's computer until they choose to share it.
