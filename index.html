@@ -481,14 +481,12 @@ function startPeer(){
   state.peer.on('error', err=>{
     const t=err.type;
     if(t==='unavailable-id'){
-      // owner refreshed and the old ghost still holds the id — retry a few times
-      if(state.me.isOwner && ownerReclaimTries<12){
+      // owner refreshed; the previous session's link may linger for a few seconds — keep retrying, never give up.
+      if(state.me.isOwner){
         ownerReclaimTries++;
-        showOverlay('Reopening your room…','Reclaiming your room link (a moment after a refresh). Attempt '+ownerReclaimTries+'.');
-        setTimeout(startPeer, 1600);
-      } else if(state.me.isOwner){
-        // give up owning the fixed id; join as a guest of our own room if someone else hosts, else error
-        showOverlay('Room busy','Your room link is still held by a previous session. Wait ~15s and refresh.');
+        const wait=Math.min(1000+ownerReclaimTries*300, 4000);
+        showOverlay('Rejoining your room…','Your guests are still connected — slipping back in. (attempt '+ownerReclaimTries+')');
+        setTimeout(startPeer, wait);
       }
       return;
     }
@@ -499,21 +497,18 @@ function startPeer(){
   state.peer.on('disconnected', ()=>{ try{ state.peer.reconnect(); }catch(e){} });
 }
 
-/* guest: keep a live data connection to the hub (owner @ meetingId) */
-let hubRetry=null;
+/* guest: keep a live data connection to the hub (owner @ meetingId).
+   Called on join and repeatedly by the watchdog until the owner is linked. */
 function connectToHub(){
-  if(state.byPeer.get(state.meetingId)){ return; } // already linked to owner peerId
-  const already=[...state.pending.keys()].includes(state.meetingId);
-  if(!already){
-    const conn=state.peer.connect(state.meetingId,{reliable:true});
-    registerConn(state.meetingId, conn);
-  }
-  clearTimeout(hubRetry);
-  hubRetry=setTimeout(()=>{
-    const linked=[...state.parts.values()].some(p=>p.isOwner && p.live);
-    if(!linked){ if(!state.connectedOnce) showOverlay('Waiting for the host…','This room opens when its host is here. It’ll connect automatically.'); connectToHub(); }
-    else hideOverlay();
-  }, 3000);
+  if(state.me.isOwner) return;
+  const ownerLive=[...state.parts.values()].some(p=>p.isOwner && p.live);
+  if(ownerLive){ hideOverlay(); return; }             // already connected to the host
+  // drop any stale / half-open attempt to the hub, then try fresh
+  const stale=state.pending.get(state.meetingId);
+  if(stale){ try{ stale.conn&&stale.conn.close(); }catch(e){} state.pending.delete(state.meetingId); }
+  const conn=state.peer.connect(state.meetingId,{reliable:true});
+  registerConn(state.meetingId, conn);
+  if(!state.connectedOnce) showOverlay('Waiting for the host…','This room opens when its host is here — it’ll connect automatically.');
 }
 
 function stash(peerId, key, val){
@@ -1102,7 +1097,12 @@ function showRecPill(){ $('#recPill').classList.remove('hidden'); updateRecPill(
 function hideRecPill(){ if(!state.recording) $('#recPill').classList.add('hidden'); }
 function updateRecPill(){ if(!state.recording){ $('#recPill').classList.add('hidden'); return; } $('#recPill').classList.remove('hidden'); $('#recText').textContent='REC '+fmtTime(now()-rec.startTs)+'  ·  '+(rec.bytes/1048576).toFixed(0)+' MB'; }
 
-window.addEventListener('beforeunload', ()=>{ try{ broadcast({t:'bye',uid:state.me.uid}); }catch(e){} try{ if(state.recording) rec.mr.stop(); }catch(e){} });
+window.addEventListener('beforeunload', ()=>{
+  try{ broadcast({t:'bye',uid:state.me.uid}); }catch(e){}
+  try{ if(state.recording) rec.mr.stop(); }catch(e){}
+  // release the room link immediately so a refreshing host can reclaim it at once
+  try{ state.peer&&state.peer.destroy(); }catch(e){}
+});
 
 /* ---------- go ---------- */
 initLobby();

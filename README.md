@@ -29,7 +29,7 @@ When you start a room, the address bar becomes something like `…/your-repo/#m=
 
 You can also share just the short **room code** (shown top-left, e.g. `DP-4KX9-M2`); a guest can paste either the code or the full link on the start screen.
 
-> The person who *starts* the room is its host and keeps the room's link alive. As long as the host has the tab open, people can come and go freely. If the host closes the tab, the host can reopen the same link to bring the room back (give it a few seconds after a refresh while the link frees up).
+> The person who *starts* the room is its host. **If the host refreshes or briefly drops, everyone else stays connected and keeps talking** — the guests are linked directly to each other, not routed through the host — and the host automatically slips back in on reload. New people can join whenever the host is present; while the host is momentarily away, the existing group carries on and the host rejoins within a few seconds.
 
 ## How to use it
 
